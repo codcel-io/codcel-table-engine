@@ -91,4 +91,68 @@ impl SqlAggregate {
             SqlAggregate::Max => "MAX",
         }
     }
+
+    /// Builds a SQL SELECT expression for an aggregate over one or more numeric columns.
+    ///
+    /// Matches Excel behavior where aggregate functions (AVERAGE, SUM, MIN, MAX) ignore
+    /// non-numeric values. When applied to a multi-column range, they operate on ALL
+    /// numeric cells as one flat set.
+    ///
+    /// The `numeric_cols` should already be formatted/quoted by the caller (e.g. `"c3"` for
+    /// DataFusion or `"\"c3\""` for PostgreSQL).
+    ///
+    /// Returns a SQL expression suitable for use in `SELECT {expr} FROM ...`.
+    pub fn build_aggregate_select(&self, numeric_cols: &[String]) -> String {
+        match self {
+            SqlAggregate::Count | SqlAggregate::CountA => {
+                // COUNT already uses "*" - handled by caller
+                "COUNT(*)".to_string()
+            }
+            SqlAggregate::Average => {
+                if numeric_cols.len() == 1 {
+                    format!("AVG({})", numeric_cols[0])
+                } else {
+                    // Excel AVERAGE: flat average across all numeric cells
+                    // (SUM(c2) + SUM(c3) + ...) / NULLIF(COUNT(c2) + COUNT(c3) + ..., 0)
+                    let sums: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("COALESCE(SUM({}), 0)", c))
+                        .collect();
+                    let counts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("COUNT({})", c))
+                        .collect();
+                    format!("({}) / NULLIF({}, 0)", sums.join(" + "), counts.join(" + "))
+                }
+            }
+            SqlAggregate::Sum => {
+                if numeric_cols.len() == 1 {
+                    format!("SUM({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("COALESCE(SUM({}), 0)", c))
+                        .collect();
+                    parts.join(" + ")
+                }
+            }
+            SqlAggregate::Min => {
+                if numeric_cols.len() == 1 {
+                    format!("MIN({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("MIN({})", c))
+                        .collect();
+                    format!("LEAST({})", parts.join(", "))
+                }
+            }
+            SqlAggregate::Max => {
+                if numeric_cols.len() == 1 {
+                    format!("MAX({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("MAX({})", c))
+                        .collect();
+                    format!("GREATEST({})", parts.join(", "))
+                }
+            }
+        }
+    }
 }

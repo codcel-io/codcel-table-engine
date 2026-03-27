@@ -26,4 +26,11 @@ impl ColumnType {
     pub fn is_non_text_type(&self) -> bool {
         !matches!(self, ColumnType::Text)
     }
+
+    /// Returns true if this column type is numeric and suitable for aggregate
+    /// functions like SUM, AVG, MIN, MAX. Matches Excel behavior where these
+    /// functions ignore non-numeric values.
+    pub fn is_numeric(&self) -> bool {
+        matches!(self, ColumnType::Integer | ColumnType::BigInt | ColumnType::Float | ColumnType::Double)
+    }
 }
