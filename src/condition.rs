@@ -172,6 +172,14 @@ pub enum ConditionValue {
     /// - Second field: The start position
     /// - Third field: `true` for case-sensitive, `false` to wrap in `UPPER()`
     SubStringColumn(String, Value, bool),
+
+    /// An EXTRACT expression on a column for date/time parts.
+    ///
+    /// Generates: `EXTRACT(part FROM column)` (e.g., `EXTRACT(HOUR FROM c2)`)
+    ///
+    /// - First field: The column name
+    /// - Second field: The date/time part name (HOUR, MINUTE, SECOND, DAY, MONTH, YEAR)
+    ExtractColumn(String, String),
 }
 
 impl ConditionValue {
@@ -276,6 +284,20 @@ impl ConditionValue {
     /// `SUBSTRING(column, start)` or `UPPER(SUBSTRING(column, start))`.
     pub fn new_substring_columns(column: &str, length: Value, is_case_sensitive: bool) -> ConditionValue {
         ConditionValue::SubStringColumn(column.to_string(), length, is_case_sensitive)
+    }
+
+    /// Creates an EXTRACT expression on a column for date/time parts.
+    ///
+    /// # Arguments
+    ///
+    /// * `column` - The column name to extract from
+    /// * `part` - The date/time part (HOUR, MINUTE, SECOND, DAY, MONTH, YEAR)
+    ///
+    /// # Returns
+    ///
+    /// A [`ConditionValue::ExtractColumn`] variant that generates `EXTRACT(part FROM column)`.
+    pub fn new_extract_column(column: &str, part: &str) -> ConditionValue {
+        ConditionValue::ExtractColumn(column.to_string(), part.to_uppercase())
     }
 
     /// Creates a nested condition value.
@@ -494,6 +516,36 @@ impl ConditionValue {
                     Ok(format!("SUBSTRING({column}, {:})", length.i32(value_format)?))
                 } else {
                     Ok(format!("UPPER(SUBSTRING({column}, {:}))", length.i32(value_format)?))
+                }
+            }
+            ConditionValue::ExtractColumn(column, part) => {
+                const VALID_PARTS: &[&str] = &["HOUR", "MINUTE", "SECOND", "DAY", "MONTH", "YEAR"];
+                if !VALID_PARTS.contains(&part.as_str()) {
+                    return Err(format!("Invalid EXTRACT part: '{}'. Allowed parts are: {:?}", part, VALID_PARTS).into());
+                }
+                validate_sql_identifier(column)?;
+
+                // Check if the column is a numeric type (Excel serial number) vs native timestamp
+                let is_numeric = column_types.get(column)
+                    .map(|ct| ct.is_numeric())
+                    .unwrap_or(false);
+
+                if is_numeric {
+                    // Column stores Excel serial numbers as float — use arithmetic extraction
+                    // Excel serial: integer part = days since 1900-01-01, fractional part = time of day
+                    match part.as_str() {
+                        "HOUR" => Ok(format!("CAST(FLOOR(({column} - FLOOR({column})) * 24) AS INTEGER)")),
+                        "MINUTE" => Ok(format!("CAST(FLOOR(MOD(({column} - FLOOR({column})) * 24, 1) * 60) AS INTEGER)")),
+                        "SECOND" => Ok(format!("CAST(FLOOR(MOD(({column} - FLOOR({column})) * 1440, 1) * 60) AS INTEGER)")),
+                        _ => {
+                            // DAY, MONTH, YEAR require full date conversion — use EXTRACT on converted timestamp
+                            // Convert Excel serial to Unix timestamp: (serial - 25569) * 86400
+                            Ok(format!("EXTRACT({part} FROM CAST(({column} - 25569) * 86400 AS TIMESTAMP)"))
+                        }
+                    }
+                } else {
+                    // Native timestamp/date column — use standard EXTRACT
+                    Ok(format!("EXTRACT({} FROM {})", part, column))
                 }
             }
             ConditionValue::WildcardValue(value, is_case_sensitive, wildcard_position) => {
