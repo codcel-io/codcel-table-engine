@@ -1,6 +1,6 @@
 [package]
 name = "codcel-table-engine"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Codcel <support@codcel.io>"]
 description = "Shared utilities for Codcel table engines including conditions, search traits, and constants."
@@ -14,7 +14,7 @@ categories = ["mathematics", "finance"]
 
 
 [dependencies]
-codcel-calculation-engine = { git = "https://github.com/codcel-io/codcel-calculation-engine.git", tag = "release-0.1.7" }
+codcel-calculation-engine = { git = "https://github.com/codcel-io/codcel-calculation-engine.git", tag = "pre-release-0.1.8" }
 async-trait = "0.1.89"
 regex = "1.12.3"
 once_cell = "1.21.3"
