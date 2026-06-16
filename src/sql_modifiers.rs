@@ -77,6 +77,14 @@ pub enum SqlAggregate {
     Min,
     /// MAX(col) — Excel MAX
     Max,
+    /// STDDEV_SAMP(col) — Excel STDEV / STDEV.S / DSTDEV (sample stdev, n-1 divisor)
+    StdevS,
+    /// STDDEV_POP(col) — Excel STDEVP / STDEV.P / DSTDEVP (population stdev, n divisor)
+    StdevP,
+    /// VAR_SAMP(col) — Excel VAR / VAR.S / DVAR (sample variance)
+    VarS,
+    /// VAR_POP(col) — Excel VARP / VAR.P / DVARP (population variance)
+    VarP,
 }
 
 impl SqlAggregate {
@@ -89,6 +97,10 @@ impl SqlAggregate {
             SqlAggregate::Average => "AVG",
             SqlAggregate::Min => "MIN",
             SqlAggregate::Max => "MAX",
+            SqlAggregate::StdevS => "STDDEV_SAMP",
+            SqlAggregate::StdevP => "STDDEV_POP",
+            SqlAggregate::VarS => "VAR_SAMP",
+            SqlAggregate::VarP => "VAR_POP",
         }
     }
 
@@ -151,6 +163,49 @@ impl SqlAggregate {
                         .map(|c| format!("MAX({})", c))
                         .collect();
                     format!("GREATEST({})", parts.join(", "))
+                }
+            }
+            // D-function pushdown uses a single column from the database range,
+            // so the single-column branch is the expected path for these variants.
+            // A multi-column fallback materializes the column expressions.
+            SqlAggregate::StdevS => {
+                if numeric_cols.len() == 1 {
+                    format!("STDDEV_SAMP({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("STDDEV_SAMP({})", c))
+                        .collect();
+                    parts.join(", ")
+                }
+            }
+            SqlAggregate::StdevP => {
+                if numeric_cols.len() == 1 {
+                    format!("STDDEV_POP({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("STDDEV_POP({})", c))
+                        .collect();
+                    parts.join(", ")
+                }
+            }
+            SqlAggregate::VarS => {
+                if numeric_cols.len() == 1 {
+                    format!("VAR_SAMP({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("VAR_SAMP({})", c))
+                        .collect();
+                    parts.join(", ")
+                }
+            }
+            SqlAggregate::VarP => {
+                if numeric_cols.len() == 1 {
+                    format!("VAR_POP({})", numeric_cols[0])
+                } else {
+                    let parts: Vec<String> = numeric_cols.iter()
+                        .map(|c| format!("VAR_POP({})", c))
+                        .collect();
+                    parts.join(", ")
                 }
             }
         }
