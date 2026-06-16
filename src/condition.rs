@@ -461,6 +461,9 @@ impl ConditionValue {
                     Value::Time(val) => {
                         Ok(time_to_excel(val)?.to_string())
                     }
+                    Value::Error(e) => {
+                        Err(format!("Excel error {} is not supported in a Condition Value", e.display()).into())
+                    }
                 }
             }
             ConditionValue::Columns(columns, is_case_sensitive) => {
@@ -645,6 +648,9 @@ impl ConditionValue {
                     }
                     Value::Time(val) => {
                         Ok(time_to_excel(val)?.to_string())
+                    }
+                    Value::Error(e) => {
+                        Err(format!("Excel error {} is not supported in a Condition Wildcard Value", e.display()).into())
                     }
                 }
             }
