@@ -1,6 +1,6 @@
 [package]
 name = "codcel-table-engine"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 authors = ["Codcel <support@codcel.io>"]
 description = "Shared utilities for Codcel table engines including conditions, search traits, and constants."
