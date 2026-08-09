@@ -58,7 +58,10 @@ pub struct SqlModifiers {
 impl SqlModifiers {
     /// Returns true if no modifiers are set (equivalent to default).
     pub fn is_empty(&self) -> bool {
-        self.order_by.is_none() && !self.distinct && self.aggregate.is_none() && self.limit_offset.is_none()
+        self.order_by.is_none()
+            && !self.distinct
+            && self.aggregate.is_none()
+            && self.limit_offset.is_none()
     }
 }
 
@@ -126,10 +129,12 @@ impl SqlAggregate {
                 } else {
                     // Excel AVERAGE: flat average across all numeric cells
                     // (SUM(c2) + SUM(c3) + ...) / NULLIF(COUNT(c2) + COUNT(c3) + ..., 0)
-                    let sums: Vec<String> = numeric_cols.iter()
+                    let sums: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("COALESCE(SUM({}), 0)", c))
                         .collect();
-                    let counts: Vec<String> = numeric_cols.iter()
+                    let counts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("COUNT({})", c))
                         .collect();
                     format!("({}) / NULLIF({}, 0)", sums.join(" + "), counts.join(" + "))
@@ -139,7 +144,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("SUM({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
+                    let parts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("COALESCE(SUM({}), 0)", c))
                         .collect();
                     parts.join(" + ")
@@ -149,9 +155,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("MIN({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
-                        .map(|c| format!("MIN({})", c))
-                        .collect();
+                    let parts: Vec<String> =
+                        numeric_cols.iter().map(|c| format!("MIN({})", c)).collect();
                     format!("LEAST({})", parts.join(", "))
                 }
             }
@@ -159,9 +164,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("MAX({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
-                        .map(|c| format!("MAX({})", c))
-                        .collect();
+                    let parts: Vec<String> =
+                        numeric_cols.iter().map(|c| format!("MAX({})", c)).collect();
                     format!("GREATEST({})", parts.join(", "))
                 }
             }
@@ -172,7 +176,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("STDDEV_SAMP({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
+                    let parts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("STDDEV_SAMP({})", c))
                         .collect();
                     parts.join(", ")
@@ -182,7 +187,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("STDDEV_POP({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
+                    let parts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("STDDEV_POP({})", c))
                         .collect();
                     parts.join(", ")
@@ -192,7 +198,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("VAR_SAMP({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
+                    let parts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("VAR_SAMP({})", c))
                         .collect();
                     parts.join(", ")
@@ -202,7 +209,8 @@ impl SqlAggregate {
                 if numeric_cols.len() == 1 {
                     format!("VAR_POP({})", numeric_cols[0])
                 } else {
-                    let parts: Vec<String> = numeric_cols.iter()
+                    let parts: Vec<String> = numeric_cols
+                        .iter()
                         .map(|c| format!("VAR_POP({})", c))
                         .collect();
                     parts.join(", ")

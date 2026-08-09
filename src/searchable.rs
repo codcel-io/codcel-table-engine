@@ -78,19 +78,26 @@ pub trait Searchable {
 
 impl Searchable for Vec<f64> {
     fn find_exact_pos(&self, value: &str) -> Option<usize> {
-        value.parse::<f64>().ok().and_then(|val| self.iter().position(|&x| x == val))
+        value
+            .parse::<f64>()
+            .ok()
+            .and_then(|val| self.iter().position(|&x| x == val))
     }
 
     fn find_largest_less_than_or_equal(&self, value: &str) -> Option<usize> {
         let val = value.parse::<f64>().ok()?;
-        self.iter().enumerate().filter_map(|(i, &x)| if x <= val { Some((i, x)) } else { None })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, &x)| if x <= val { Some((i, x)) } else { None })
             .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
             .map(|(i, _)| i)
     }
 
     fn find_smallest_greater_than_or_equal(&self, value: &str) -> Option<usize> {
         let val = value.parse::<f64>().ok()?;
-        self.iter().enumerate().filter_map(|(i, &x)| if x >= val { Some((i, x)) } else { None })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, &x)| if x >= val { Some((i, x)) } else { None })
             .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
             .map(|(i, _)| i)
     }
@@ -106,24 +113,30 @@ impl Searchable for Vec<f64> {
     fn sort_descending(&mut self) {
         self.sort_by(|a, b| b.partial_cmp(a).unwrap());
     }
-
 }
 
 impl Searchable for Vec<i32> {
     fn find_exact_pos(&self, value: &str) -> Option<usize> {
-        value.parse::<i32>().ok().and_then(|val| self.iter().position(|&x| x == val))
+        value
+            .parse::<i32>()
+            .ok()
+            .and_then(|val| self.iter().position(|&x| x == val))
     }
 
     fn find_largest_less_than_or_equal(&self, value: &str) -> Option<usize> {
         let val = value.parse::<i32>().ok()?;
-        self.iter().enumerate().filter_map(|(i, &x)| if x <= val { Some((i, x)) } else { None })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, &x)| if x <= val { Some((i, x)) } else { None })
             .max_by(|a, b| a.1.cmp(&b.1))
             .map(|(i, _)| i)
     }
 
     fn find_smallest_greater_than_or_equal(&self, value: &str) -> Option<usize> {
         let val = value.parse::<i32>().ok()?;
-        self.iter().enumerate().filter_map(|(i, &x)| if x >= val { Some((i, x)) } else { None })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, &x)| if x >= val { Some((i, x)) } else { None })
             .min_by(|a, b| a.1.cmp(&b.1))
             .map(|(i, _)| i)
     }
@@ -147,17 +160,29 @@ impl Searchable for Vec<String> {
     }
 
     fn find_largest_less_than_or_equal(&self, value: &str) -> Option<usize> {
-        self.iter().enumerate().filter_map(|(i, x)| {
-            if x.to_uppercase() <= value.to_uppercase() { Some((i, x)) } else { None }
-        })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, x)| {
+                if x.to_uppercase() <= value.to_uppercase() {
+                    Some((i, x))
+                } else {
+                    None
+                }
+            })
             .max_by(|a, b| a.1.to_uppercase().cmp(&b.1.to_uppercase()))
             .map(|(i, _)| i)
     }
 
     fn find_smallest_greater_than_or_equal(&self, value: &str) -> Option<usize> {
-        self.iter().enumerate().filter_map(|(i, x)| {
-            if x.to_uppercase() >= value.to_uppercase() { Some((i, x)) } else { None }
-        })
+        self.iter()
+            .enumerate()
+            .filter_map(|(i, x)| {
+                if x.to_uppercase() >= value.to_uppercase() {
+                    Some((i, x))
+                } else {
+                    None
+                }
+            })
             .min_by(|a, b| a.1.to_uppercase().cmp(&b.1.to_uppercase()))
             .map(|(i, _)| i)
     }

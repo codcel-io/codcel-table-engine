@@ -31,6 +31,9 @@ impl ColumnType {
     /// functions like SUM, AVG, MIN, MAX. Matches Excel behavior where these
     /// functions ignore non-numeric values.
     pub fn is_numeric(&self) -> bool {
-        matches!(self, ColumnType::Integer | ColumnType::BigInt | ColumnType::Float | ColumnType::Double)
+        matches!(
+            self,
+            ColumnType::Integer | ColumnType::BigInt | ColumnType::Float | ColumnType::Double
+        )
     }
 }

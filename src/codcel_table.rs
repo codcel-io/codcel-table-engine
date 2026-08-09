@@ -10,14 +10,14 @@
 //! table operations including lookup functions (VLOOKUP, HLOOKUP, XLOOKUP),
 //! matching functions (MATCH, XMATCH), and CRUD operations.
 
-use async_trait::async_trait;
-use std::error::Error;
-use codcel_calculation_engine::input::Input;
-use codcel_calculation_engine::value::Value;
-use codcel_calculation_engine::value_format::ValueFormat;
 use crate::condition::Condition;
 use crate::sql_modifiers::SqlModifiers;
 use crate::table_functions::TableFunctions;
+use async_trait::async_trait;
+use codcel_calculation_engine::input::Input;
+use codcel_calculation_engine::value::Value;
+use codcel_calculation_engine::value_format::ValueFormat;
+use std::error::Error;
 
 /// A trait defining spreadsheet-like table operations.
 ///
@@ -75,7 +75,16 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The value found at the intersection of the matching row and result column
     /// * `Err` - If no match is found or an error occurs
     #[allow(clippy::too_many_arguments)]
-    async fn v_lookup(&self, lookup_value: &str, result_column_index: &str, search_column_index: &str, range: Option<bool>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn v_lookup(
+        &self,
+        lookup_value: &str,
+        result_column_index: &str,
+        search_column_index: &str,
+        range: Option<bool>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Returns the relative position of a value in a column.
     ///
@@ -97,7 +106,14 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - The 1-based position of the match
     /// * `Err` - If no match is found or an error occurs
-    async fn match_table(&self, match_value: &str, match_type: Option<i32>, column: &str, row: u32, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn match_table(
+        &self,
+        match_value: &str,
+        match_type: Option<i32>,
+        column: &str,
+        row: u32,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Returns a value from a specific row and column position.
     ///
@@ -116,7 +132,14 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - The value at the specified position
     /// * `Err` - If the position is out of bounds or an error occurs
-    async fn index(&self, row: i32, column: Option<i32>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn index(
+        &self,
+        row: i32,
+        column: Option<i32>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Performs a horizontal lookup similar to Excel's HLOOKUP function.
     ///
@@ -138,7 +161,16 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The value found at the intersection of the result row and matching column
     /// * `Err` - If no match is found or an error occurs
     #[allow(clippy::too_many_arguments)]
-    async fn h_lookup(&self, lookup_value: &str, row_index: i32, range: Option<bool>, table_functions: &TableFunctions, input: &Input, column: &str, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn h_lookup(
+        &self,
+        lookup_value: &str,
+        row_index: i32,
+        range: Option<bool>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        column: &str,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Performs an extended lookup with advanced match and search modes.
     ///
@@ -171,7 +203,19 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The value(s) from the return columns for the matching row
     /// * `Err` - If an error occurs (not-found returns `if_not_found` value if provided)
     #[allow(clippy::too_many_arguments)]
-    async fn x_lookup(&self, lookup_value: &str, search_column: &str, columns: &str, row: u32, if_not_found: Option<String>, match_mode: Option<i32>, search_mode: Option<i32>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn x_lookup(
+        &self,
+        lookup_value: &str,
+        search_column: &str,
+        columns: &str,
+        row: u32,
+        if_not_found: Option<String>,
+        match_mode: Option<i32>,
+        search_mode: Option<i32>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Performs a simplified lookup operation.
     ///
@@ -193,7 +237,16 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The value(s) from the return columns for the matching row
     /// * `Err` - If no match is found or an error occurs
     #[allow(clippy::too_many_arguments)]
-    async fn lookup(&self, lookup_value: &str, search_column: &str, columns: &str, row: u32, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn lookup(
+        &self,
+        lookup_value: &str,
+        search_column: &str,
+        columns: &str,
+        row: u32,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Returns the position of a value with extended matching options.
     ///
@@ -214,7 +267,15 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The 1-based position of the match
     /// * `Err` - If no match is found or an error occurs
     #[allow(clippy::too_many_arguments)]
-    async fn x_match(&self, match_value: &str, match_mode: Option<i32>, search_mode: Option<i32>, column: &str, row: u32, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn x_match(
+        &self,
+        match_value: &str,
+        match_mode: Option<i32>,
+        search_mode: Option<i32>,
+        column: &str,
+        row: u32,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Filters table rows based on a condition.
     ///
@@ -235,7 +296,15 @@ pub trait CodcelTable: Send + Sync {
     /// * `Ok(Value)` - The filtered rows as a 2D array, or `if_empty` if no matches
     /// * `Err` - If an error occurs during filtering
     #[allow(clippy::too_many_arguments)]
-    async fn filter(&self, condition: Condition, if_empty: &str, columns: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn filter(
+        &self,
+        condition: Condition,
+        if_empty: &str,
+        columns: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Selects all rows from the specified columns.
     ///
@@ -250,7 +319,13 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - All rows from the specified columns as a 2D array
     /// * `Err` - If a column doesn't exist or an error occurs
-    async fn select_all(&self, columns: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn select_all(
+        &self,
+        columns: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Adds a new row to the table.
     ///
@@ -265,7 +340,13 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - Confirmation of the insert (typically the new row's ID or count)
     /// * `Err` - If the insert fails
-    async fn add_row(&self, values: Vec<Value>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn add_row(
+        &self,
+        values: Vec<Value>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Updates an existing row by its ID.
     ///
@@ -281,7 +362,14 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - Confirmation of the update (typically the number of rows affected)
     /// * `Err` - If the row doesn't exist or the update fails
-    async fn update_row(&self, id: &str, values: Vec<Value>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn update_row(
+        &self,
+        id: &str,
+        values: Vec<Value>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Deletes a row by its ID.
     ///
@@ -296,7 +384,13 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - Confirmation of the deletion (typically the number of rows affected)
     /// * `Err` - If the row doesn't exist or the deletion fails
-    async fn delete_row(&self, id: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn delete_row(
+        &self,
+        id: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Reads a single row by its ID.
     ///
@@ -311,7 +405,13 @@ pub trait CodcelTable: Send + Sync {
     ///
     /// * `Ok(Value)` - The row data as an array of values
     /// * `Err` - If the row doesn't exist or an error occurs
-    async fn read_row(&self, id: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat) -> Result<Value, Box<dyn Error + Send + Sync>>;
+    async fn read_row(
+        &self,
+        id: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>>;
 
     /// Filters table rows with SQL pushdown modifiers (ORDER BY, DISTINCT, aggregates).
     ///
@@ -319,22 +419,72 @@ pub trait CodcelTable: Send + Sync {
     /// Engines that support SQL pushdown should override this to incorporate modifiers
     /// directly into the SQL query.
     #[allow(clippy::too_many_arguments)]
-    async fn filter_with_modifiers(&self, condition: Condition, if_empty: &str, columns: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat, _modifiers: &SqlModifiers) -> Result<Value, Box<dyn Error + Send + Sync>> {
-        self.filter(condition, if_empty, columns, table_functions, input, value_format).await
+    async fn filter_with_modifiers(
+        &self,
+        condition: Condition,
+        if_empty: &str,
+        columns: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+        _modifiers: &SqlModifiers,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        self.filter(
+            condition,
+            if_empty,
+            columns,
+            table_functions,
+            input,
+            value_format,
+        )
+        .await
     }
 
     /// Selects all rows with SQL pushdown modifiers.
     ///
     /// Default implementation ignores modifiers and delegates to [`select_all`](Self::select_all).
-    async fn select_all_with_modifiers(&self, columns: &str, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat, _modifiers: &SqlModifiers) -> Result<Value, Box<dyn Error + Send + Sync>> {
-        self.select_all(columns, table_functions, input, value_format).await
+    async fn select_all_with_modifiers(
+        &self,
+        columns: &str,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+        _modifiers: &SqlModifiers,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        self.select_all(columns, table_functions, input, value_format)
+            .await
     }
 
     /// Performs an extended lookup with SQL pushdown modifiers.
     ///
     /// Default implementation ignores modifiers and delegates to [`x_lookup`](Self::x_lookup).
     #[allow(clippy::too_many_arguments)]
-    async fn x_lookup_with_modifiers(&self, lookup_value: &str, search_column: &str, columns: &str, row: u32, if_not_found: Option<String>, match_mode: Option<i32>, search_mode: Option<i32>, table_functions: &TableFunctions, input: &Input, value_format: &ValueFormat, _modifiers: &SqlModifiers) -> Result<Value, Box<dyn Error + Send + Sync>> {
-        self.x_lookup(lookup_value, search_column, columns, row, if_not_found, match_mode, search_mode, table_functions, input, value_format).await
+    async fn x_lookup_with_modifiers(
+        &self,
+        lookup_value: &str,
+        search_column: &str,
+        columns: &str,
+        row: u32,
+        if_not_found: Option<String>,
+        match_mode: Option<i32>,
+        search_mode: Option<i32>,
+        table_functions: &TableFunctions,
+        input: &Input,
+        value_format: &ValueFormat,
+        _modifiers: &SqlModifiers,
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        self.x_lookup(
+            lookup_value,
+            search_column,
+            columns,
+            row,
+            if_not_found,
+            match_mode,
+            search_mode,
+            table_functions,
+            input,
+            value_format,
+        )
+        .await
     }
 }

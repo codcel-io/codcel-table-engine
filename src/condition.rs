@@ -33,19 +33,18 @@
 //! let condition = Condition::new(lhs, "=", rhs);
 //! ```
 
-use std::collections::HashMap;
-use std::error::Error;
 use crate::column_type::ColumnType;
 use codcel_calculation_engine::date_time_base::{date_time_to_excel, time_to_excel};
 use codcel_calculation_engine::value::Value;
 use codcel_calculation_engine::value_format::ValueFormat;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::collections::HashMap;
+use std::error::Error;
 
 /// Regex pattern for valid SQL identifiers: alphanumeric and underscores only, must start with letter or underscore
-static IDENTIFIER_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").expect("Invalid regex pattern")
-});
+static IDENTIFIER_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").expect("Invalid regex pattern"));
 
 /// Validates that a string is a safe SQL identifier (column name, table name, etc.)
 fn validate_sql_identifier(identifier: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -64,7 +63,10 @@ fn escape_sql_string(value: &str) -> String {
 }
 
 /// List of allowed SQL operators for condition building
-const ALLOWED_OPERATORS: &[&str] = &["=", "<>", "!=", "<", "<=", ">", ">=", "LIKE", "NOT LIKE", "IN", "NOT IN", "IS", "IS NOT", "AND", "OR"];
+const ALLOWED_OPERATORS: &[&str] = &[
+    "=", "<>", "!=", "<", "<=", ">", ">=", "LIKE", "NOT LIKE", "IN", "NOT IN", "IS", "IS NOT",
+    "AND", "OR",
+];
 
 /// Validates that an operator is a safe SQL operator
 fn validate_sql_operator(op: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -72,7 +74,11 @@ fn validate_sql_operator(op: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
     if ALLOWED_OPERATORS.iter().any(|&allowed| allowed == op_upper) {
         Ok(())
     } else {
-        Err(format!("Invalid SQL operator: '{}'. Allowed operators are: {:?}", op, ALLOWED_OPERATORS).into())
+        Err(format!(
+            "Invalid SQL operator: '{}'. Allowed operators are: {:?}",
+            op, ALLOWED_OPERATORS
+        )
+        .into())
     }
 }
 
@@ -209,7 +215,11 @@ impl ConditionValue {
     ///
     /// A [`ConditionValue::WildcardValue`] variant. Characters `*` and `?` in the value
     /// are automatically converted to SQL wildcards `%` and `_` respectively.
-    pub fn new_wildcard_value(value: Value, is_case_sensitive: bool, wildcard_position: WildcardPosition) -> ConditionValue {
+    pub fn new_wildcard_value(
+        value: Value,
+        is_case_sensitive: bool,
+        wildcard_position: WildcardPosition,
+    ) -> ConditionValue {
         ConditionValue::WildcardValue(value, is_case_sensitive, wildcard_position)
     }
 
@@ -282,7 +292,11 @@ impl ConditionValue {
     ///
     /// A [`ConditionValue::SubStringColumn`] variant that generates
     /// `SUBSTRING(column, start)` or `UPPER(SUBSTRING(column, start))`.
-    pub fn new_substring_columns(column: &str, length: Value, is_case_sensitive: bool) -> ConditionValue {
+    pub fn new_substring_columns(
+        column: &str,
+        length: Value,
+        is_case_sensitive: bool,
+    ) -> ConditionValue {
         ConditionValue::SubStringColumn(column.to_string(), length, is_case_sensitive)
     }
 
@@ -349,7 +363,11 @@ impl ConditionValue {
     /// - An unsupported value type is used (e.g., `Bool`, `VecValue`, `None`)
     /// - A column name contains invalid characters
     /// - An invalid SQL operator is used in a nested condition
-    pub fn value(&self, column_types: &HashMap<String, ColumnType>, value_format: &ValueFormat) -> Result<String, Box<dyn Error + Send + Sync>> {
+    pub fn value(
+        &self,
+        column_types: &HashMap<String, ColumnType>,
+        value_format: &ValueFormat,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
         match self {
             ConditionValue::Value(value, is_case_sensitive) => {
                 match value {
@@ -364,9 +382,7 @@ impl ConditionValue {
                     }
                     Value::OptionString(val) => {
                         match val {
-                            None => {
-                                Ok("''".to_string())
-                            }
+                            None => Ok("''".to_string()),
                             Some(v) => {
                                 // Escape the string value to prevent SQL injection
                                 let escaped = escape_sql_string(v);
@@ -378,12 +394,14 @@ impl ConditionValue {
                             }
                         }
                     }
-                    Value::OptionBool(val) => {
-                        match val {
-                            Some(b) => Ok(if *b { "true".to_string() } else { "false".to_string() }),
-                            None => Ok("NULL".to_string()),
-                        }
-                    }
+                    Value::OptionBool(val) => match val {
+                        Some(b) => Ok(if *b {
+                            "true".to_string()
+                        } else {
+                            "false".to_string()
+                        }),
+                        None => Ok("NULL".to_string()),
+                    },
                     Value::VecValue(_) => {
                         Err("Vec values are not supported yet in a Condition Value".into())
                     }
@@ -395,8 +413,10 @@ impl ConditionValue {
                             if let Some(inner) = value.first() {
                                 if inner.len() == 1 {
                                     let val = inner.first().unwrap();
-                                    let new_conditon_value = ConditionValue::new_value(val.clone(), *is_case_sensitive);
-                                    let val = new_conditon_value.value(column_types, value_format)?;
+                                    let new_conditon_value =
+                                        ConditionValue::new_value(val.clone(), *is_case_sensitive);
+                                    let val =
+                                        new_conditon_value.value(column_types, value_format)?;
                                     return Ok(val);
                                 }
                             }
@@ -407,27 +427,21 @@ impl ConditionValue {
                     Value::OptionAreaValue(_) => {
                         Err("Option Area values are not supported yet in a Condition Value".into())
                     }
-                    Value::None => {
-                        Err("None is not supported yet in a Condition Value".into())
-                    }
-                    Value::F64(val) => {
-                        Ok(format!("{val}"))
-                    }
-                    Value::I32(val) => {
-                        Ok(format!("{val}"))
-                    }
-                    Value::Bool(val) => {
-                        Ok(if *val { "true".to_string() } else { "false".to_string() })
-                    }
+                    Value::None => Err("None is not supported yet in a Condition Value".into()),
+                    Value::F64(val) => Ok(format!("{val}")),
+                    Value::I32(val) => Ok(format!("{val}")),
+                    Value::Bool(val) => Ok(if *val {
+                        "true".to_string()
+                    } else {
+                        "false".to_string()
+                    }),
                     Value::OptionF64(val) => {
                         match val {
                             None => {
                                 // TODO CHECK IF THIS CORRECT
                                 Ok("0.0".to_string())
                             }
-                            Some(v) => {
-                                Ok(format!("{v}"))
-                            }
+                            Some(v) => Ok(format!("{v}")),
                         }
                     }
                     Value::OptionI32(val) => {
@@ -436,17 +450,21 @@ impl ConditionValue {
                                 // TODO CHECK IF THIS CORRECT
                                 Ok("0".to_string())
                             }
-                            Some(v) => {
-                                Ok(format!("{v}"))
-                            }
+                            Some(v) => Ok(format!("{v}")),
                         }
                     }
-                    Value::ChronoDateTime(val) => {
-                        Ok(date_time_to_excel(val, value_format.allow_lotus_1_2_3_1900_date_bug)?.to_string())
-                    }
+                    Value::ChronoDateTime(val) => Ok(date_time_to_excel(
+                        val,
+                        value_format.allow_lotus_1_2_3_1900_date_bug,
+                    )?
+                    .to_string()),
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
-                            Ok(date_time_to_excel(value, value_format.allow_lotus_1_2_3_1900_date_bug)?.to_string())
+                            Ok(date_time_to_excel(
+                                value,
+                                value_format.allow_lotus_1_2_3_1900_date_bug,
+                            )?
+                            .to_string())
                         } else {
                             Err("Empty datetime is not supported in a Condition Value".into())
                         }
@@ -458,28 +476,28 @@ impl ConditionValue {
                             Err("Empty time is not supported in a Condition Value".into())
                         }
                     }
-                    Value::Time(val) => {
-                        Ok(time_to_excel(val)?.to_string())
-                    }
-                    Value::Error(e) => {
-                        Err(format!("Excel error {} is not supported in a Condition Value", e.display()).into())
-                    }
+                    Value::Time(val) => Ok(time_to_excel(val)?.to_string()),
+                    Value::Error(e) => Err(format!(
+                        "Excel error {} is not supported in a Condition Value",
+                        e.display()
+                    )
+                    .into()),
                 }
             }
             ConditionValue::Columns(columns, is_case_sensitive) => {
-                let columns_vec: Vec<String> = columns.split(',').map(|s| s.trim().to_string()).collect();
+                let columns_vec: Vec<String> =
+                    columns.split(',').map(|s| s.trim().to_string()).collect();
                 // Validate all column identifiers
                 for col in &columns_vec {
                     validate_sql_identifier(col)?;
                 }
-                let is_not_upper = columns_vec.iter().any(|column| {
-                    match column_types.get(column) {
-                        Some(column_type) => is_non_upper_type(column_type),
-                        None => {
-                            false
-                        }
-                    }
-                });
+                let is_not_upper =
+                    columns_vec
+                        .iter()
+                        .any(|column| match column_types.get(column) {
+                            Some(column_type) => is_non_upper_type(column_type),
+                            None => false,
+                        });
                 if is_not_upper || *is_case_sensitive {
                     Ok(columns.to_string())
                 } else {
@@ -489,11 +507,17 @@ impl ConditionValue {
             ConditionValue::SubstrValue(value, length) => {
                 let condition_value = ConditionValue::new_value(value.clone(), false);
                 let val = condition_value.value(column_types, value_format)?;
-                Ok(format!("UPPER(SUBSTR({val}, 1, {:}))", length.i32(value_format)?))
+                Ok(format!(
+                    "UPPER(SUBSTR({val}, 1, {:}))",
+                    length.i32(value_format)?
+                ))
             }
             ConditionValue::SubstrColumn(column, length) => {
                 validate_sql_identifier(column)?;
-                Ok(format!("UPPER(SUBSTR({column}, 1, {:}))", length.i32(value_format)?))
+                Ok(format!(
+                    "UPPER(SUBSTR({column}, 1, {:}))",
+                    length.i32(value_format)?
+                ))
             }
             ConditionValue::LengthColumn(column) => {
                 validate_sql_identifier(column)?;
@@ -516,20 +540,31 @@ impl ConditionValue {
             ConditionValue::SubStringColumn(column, length, is_case_sensitive) => {
                 validate_sql_identifier(column)?;
                 if *is_case_sensitive {
-                    Ok(format!("SUBSTRING({column}, {:})", length.i32(value_format)?))
+                    Ok(format!(
+                        "SUBSTRING({column}, {:})",
+                        length.i32(value_format)?
+                    ))
                 } else {
-                    Ok(format!("UPPER(SUBSTRING({column}, {:}))", length.i32(value_format)?))
+                    Ok(format!(
+                        "UPPER(SUBSTRING({column}, {:}))",
+                        length.i32(value_format)?
+                    ))
                 }
             }
             ConditionValue::ExtractColumn(column, part) => {
                 const VALID_PARTS: &[&str] = &["HOUR", "MINUTE", "SECOND", "DAY", "MONTH", "YEAR"];
                 if !VALID_PARTS.contains(&part.as_str()) {
-                    return Err(format!("Invalid EXTRACT part: '{}'. Allowed parts are: {:?}", part, VALID_PARTS).into());
+                    return Err(format!(
+                        "Invalid EXTRACT part: '{}'. Allowed parts are: {:?}",
+                        part, VALID_PARTS
+                    )
+                    .into());
                 }
                 validate_sql_identifier(column)?;
 
                 // Check if the column is a numeric type (Excel serial number) vs native timestamp
-                let is_numeric = column_types.get(column)
+                let is_numeric = column_types
+                    .get(column)
                     .map(|ct| ct.is_numeric())
                     .unwrap_or(false);
 
@@ -565,9 +600,7 @@ impl ConditionValue {
                     }
                     Value::OptionString(val) => {
                         match val {
-                            None => {
-                                Ok("''".to_string())
-                            }
+                            None => Ok("''".to_string()),
                             Some(v) => {
                                 // Escape first, then apply wildcard transformations
                                 let escaped = escape_sql_string(v);
@@ -580,30 +613,29 @@ impl ConditionValue {
                             }
                         }
                     }
-                    Value::OptionBool(_) => {
-                        Err("Option bool value are not supported yet in a Condition Wildcard Value".into())
-                    }
+                    Value::OptionBool(_) => Err(
+                        "Option bool value are not supported yet in a Condition Wildcard Value"
+                            .into(),
+                    ),
                     Value::VecValue(_) => {
                         Err("Vec values are not supported yet in a Condition Wildcard Value".into())
                     }
-                    Value::OptionVecValue(_) => {
-                        Err("Option vec values are not supported yet in a Condition Wildcard Value".into())
-                    }
-                    Value::AreaValue(_) => {
-                        Err("Area values are not supported yet in a Condition Wildcard Value".into())
-                    }
-                    Value::OptionAreaValue(_) => {
-                        Err("Option Area values are not supported yet in a Condition Wildcard Value".into())
-                    }
+                    Value::OptionVecValue(_) => Err(
+                        "Option vec values are not supported yet in a Condition Wildcard Value"
+                            .into(),
+                    ),
+                    Value::AreaValue(_) => Err(
+                        "Area values are not supported yet in a Condition Wildcard Value".into(),
+                    ),
+                    Value::OptionAreaValue(_) => Err(
+                        "Option Area values are not supported yet in a Condition Wildcard Value"
+                            .into(),
+                    ),
                     Value::None => {
                         Err("None is not supported yet in a Condition Wildcard Value".into())
                     }
-                    Value::F64(val) => {
-                        Ok(format!("{val}"))
-                    }
-                    Value::I32(val) => {
-                        Ok(format!("{val}"))
-                    }
+                    Value::F64(val) => Ok(format!("{val}")),
+                    Value::I32(val) => Ok(format!("{val}")),
                     Value::Bool(_) => {
                         Err("Bool value are not supported yet in a Condition Wildcard Value".into())
                     }
@@ -613,9 +645,7 @@ impl ConditionValue {
                                 // TODO CHECK IF THIS CORRECT
                                 Ok("0.0".to_string())
                             }
-                            Some(v) => {
-                                Ok(format!("{v}"))
-                            }
+                            Some(v) => Ok(format!("{v}")),
                         }
                     }
                     Value::OptionI32(val) => {
@@ -624,17 +654,21 @@ impl ConditionValue {
                                 // TODO CHECK IF THIS CORRECT
                                 Ok("0".to_string())
                             }
-                            Some(v) => {
-                                Ok(format!("{v}"))
-                            }
+                            Some(v) => Ok(format!("{v}")),
                         }
                     }
-                    Value::ChronoDateTime(val) => {
-                        Ok(date_time_to_excel(val, value_format.allow_lotus_1_2_3_1900_date_bug)?.to_string())
-                    }
+                    Value::ChronoDateTime(val) => Ok(date_time_to_excel(
+                        val,
+                        value_format.allow_lotus_1_2_3_1900_date_bug,
+                    )?
+                    .to_string()),
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
-                            Ok(date_time_to_excel(value, value_format.allow_lotus_1_2_3_1900_date_bug)?.to_string())
+                            Ok(date_time_to_excel(
+                                value,
+                                value_format.allow_lotus_1_2_3_1900_date_bug,
+                            )?
+                            .to_string())
                         } else {
                             Err("Empty datetime is not supported in a Condition Value".into())
                         }
@@ -646,12 +680,12 @@ impl ConditionValue {
                             Err("Empty time is not supported in a Condition Value".into())
                         }
                     }
-                    Value::Time(val) => {
-                        Ok(time_to_excel(val)?.to_string())
-                    }
-                    Value::Error(e) => {
-                        Err(format!("Excel error {} is not supported in a Condition Wildcard Value", e.display()).into())
-                    }
+                    Value::Time(val) => Ok(time_to_excel(val)?.to_string()),
+                    Value::Error(e) => Err(format!(
+                        "Excel error {} is not supported in a Condition Wildcard Value",
+                        e.display()
+                    )
+                    .into()),
                 }
             }
         }
@@ -712,7 +746,11 @@ impl Condition {
     /// A new [`Condition`] instance. Note that operator validation happens when
     /// [`condition()`](Self::condition) is called, not during construction.
     pub fn new(lhs: ConditionValue, op: &str, rhs: ConditionValue) -> Condition {
-        Condition { lhs, op: op.to_string(), rhs }
+        Condition {
+            lhs,
+            op: op.to_string(),
+            rhs,
+        }
     }
 
     /// Generates the SQL string representation of this condition.
@@ -736,7 +774,11 @@ impl Condition {
     /// - The operator is not in the allowed list
     /// - A column name contains invalid characters
     /// - A value type is not supported
-    pub fn condition(&self, column_types: &HashMap<String, ColumnType>, value_format: &ValueFormat) -> Result<String, Box<dyn Error + Send + Sync>> {
+    pub fn condition(
+        &self,
+        column_types: &HashMap<String, ColumnType>,
+        value_format: &ValueFormat,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
         // Validate operator to prevent SQL injection
         validate_sql_operator(&self.op)?;
 
@@ -753,18 +795,10 @@ fn is_non_upper_type(column_type: &ColumnType) -> bool {
 
 fn wildcard(value: &str, wildcard_position: &WildcardPosition) -> String {
     let value = match wildcard_position {
-        WildcardPosition::End => {
-            &format!("{value}%")
-        }
-        WildcardPosition::Start => {
-            &format!("%{value}")
-        }
-        WildcardPosition::Both => {
-            &format!("%{value}%")
-        }
-        WildcardPosition::None => {
-            value
-        }
+        WildcardPosition::End => &format!("{value}%"),
+        WildcardPosition::Start => &format!("%{value}"),
+        WildcardPosition::Both => &format!("%{value}%"),
+        WildcardPosition::None => value,
     };
 
     let value = value.replace("*", "%");
@@ -773,11 +807,11 @@ fn wildcard(value: &str, wildcard_position: &WildcardPosition) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use crate::column_type::ColumnType;
     use super::{Condition, ConditionValue, WildcardPosition};
+    use crate::column_type::ColumnType;
     use codcel_calculation_engine::value::Value;
     use codcel_calculation_engine::value_format::ValueFormat;
+    use std::collections::HashMap;
 
     // Helper function to create a ValueFormat instance
     fn create_value_format() -> ValueFormat {
@@ -795,7 +829,8 @@ mod tests {
     fn test_wildcard_position_end() {
         // Test WildcardPosition::End with a string value
         let value = Value::String("test".to_string());
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
@@ -808,7 +843,8 @@ mod tests {
     fn test_wildcard_position_start() {
         // Test WildcardPosition::Start with a string value
         let value = Value::String("test".to_string());
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::Start);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::Start);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
@@ -821,7 +857,8 @@ mod tests {
     fn test_wildcard_position_both() {
         // Test WildcardPosition::Both with a string value
         let value = Value::String("test".to_string());
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::Both);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::Both);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
@@ -834,7 +871,8 @@ mod tests {
     fn test_wildcard_position_none() {
         // Test WildcardPosition::None with a string value
         let value = Value::String("test".to_string());
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::None);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::None);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
@@ -847,7 +885,8 @@ mod tests {
     fn test_wildcard_with_special_chars() {
         // Test wildcard function with special characters
         let value = Value::String("test*with?wildcards".to_string());
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::None);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::None);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
@@ -1135,14 +1174,18 @@ mod tests {
     fn test_condition_with_complex_values() {
         // Test Condition with more complex values
         let lhs = ConditionValue::new_columns("column1", false);
-        let rhs = ConditionValue::new_substr_value(Value::String("test".to_string()), Value::I32(2));
+        let rhs =
+            ConditionValue::new_substr_value(Value::String("test".to_string()), Value::I32(2));
         let condition = Condition::new(lhs, "LIKE", rhs);
 
         let column_types = HashMap::new();
         let value_format = create_value_format();
 
         let result = condition.condition(&column_types, &value_format).unwrap();
-        assert_eq!(result, "UPPER(column1) LIKE UPPER(SUBSTR(UPPER('test'), 1, 2))");
+        assert_eq!(
+            result,
+            "UPPER(column1) LIKE UPPER(SUBSTR(UPPER('test'), 1, 2))"
+        );
     }
 
     #[test]
@@ -1185,25 +1228,29 @@ mod tests {
 
         // Test with F64
         let value = Value::F64(42.5);
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
         let result = condition_value.value(&column_types, &value_format).unwrap();
         assert_eq!(result, "42.5");
 
         // Test with I32
         let value = Value::I32(42);
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
         let result = condition_value.value(&column_types, &value_format).unwrap();
         assert_eq!(result, "42");
 
         // Test with OptionF64
         let value = Value::OptionF64(Some(42.5));
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
         let result = condition_value.value(&column_types, &value_format).unwrap();
         assert_eq!(result, "42.5");
 
         // Test with OptionI32
         let value = Value::OptionI32(Some(42));
-        let condition_value = ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
+        let condition_value =
+            ConditionValue::new_wildcard_value(value, true, WildcardPosition::End);
         let result = condition_value.value(&column_types, &value_format).unwrap();
         assert_eq!(result, "42");
     }
