@@ -165,6 +165,24 @@ The condition builder includes SQL injection protection. When contributing to co
 
 ---
 
+## Local Development Across Repositories
+
+This crate depends on `codcel-calculation-engine` by published version, not by git. To
+build against your local checkouts instead of the crates.io releases, add a
+`[patch.crates-io]` section to your `~/.cargo/config.toml`:
+
+```toml
+[patch.crates-io]
+codcel-calculation-engine = { path = "/path/to/codcel-calculation-engine" }
+codcel-table-engine       = { path = "/path/to/codcel-table-engine" }
+```
+
+This applies to every cargo invocation on your machine, so unreleased changes in one
+engine are picked up by the others without a publish. Remove or comment it out before
+verifying that a change works against the published crates.
+
+---
+
 ## Tests
 
 Tests are required for behaviour changes.
