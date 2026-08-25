@@ -455,14 +455,14 @@ impl ConditionValue {
                     }
                     Value::ChronoDateTime(val) => Ok(date_time_to_excel(
                         val,
-                        value_format.allow_lotus_1_2_3_1900_date_bug,
+                        value_format.date_semantics(),
                     )?
                     .to_string()),
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
                             Ok(date_time_to_excel(
                                 value,
-                                value_format.allow_lotus_1_2_3_1900_date_bug,
+                                value_format.date_semantics(),
                             )?
                             .to_string())
                         } else {
@@ -659,14 +659,14 @@ impl ConditionValue {
                     }
                     Value::ChronoDateTime(val) => Ok(date_time_to_excel(
                         val,
-                        value_format.allow_lotus_1_2_3_1900_date_bug,
+                        value_format.date_semantics(),
                     )?
                     .to_string()),
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
                             Ok(date_time_to_excel(
                                 value,
-                                value_format.allow_lotus_1_2_3_1900_date_bug,
+                                value_format.date_semantics(),
                             )?
                             .to_string())
                         } else {
@@ -822,6 +822,7 @@ mod tests {
             thousands_separator: ",".to_string(),
             use_excel_rounding: false,
             allow_lotus_1_2_3_1900_date_bug: true,
+            ..Default::default()
         }
     }
 
