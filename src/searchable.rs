@@ -89,7 +89,7 @@ impl Searchable for Vec<f64> {
         self.iter()
             .enumerate()
             .filter_map(|(i, &x)| if x <= val { Some((i, x)) } else { None })
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .max_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(i, _)| i)
     }
 
@@ -98,7 +98,7 @@ impl Searchable for Vec<f64> {
         self.iter()
             .enumerate()
             .filter_map(|(i, &x)| if x >= val { Some((i, x)) } else { None })
-            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(i, _)| i)
     }
 
@@ -107,11 +107,11 @@ impl Searchable for Vec<f64> {
     }
 
     fn sort_ascending(&mut self) {
-        self.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        self.sort_by(|a, b| a.total_cmp(b));
     }
 
     fn sort_descending(&mut self) {
-        self.sort_by(|a, b| b.partial_cmp(a).unwrap());
+        self.sort_by(|a, b| b.total_cmp(a));
     }
 }
 

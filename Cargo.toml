@@ -13,6 +13,7 @@ keywords = ["excel", "spreadsheet", "lookup", "vlookup", "sql"]
 categories = ["database", "asynchronous", "data-structures"]
 include = [
     "src/**/*.rs",
+    "clippy.toml",
     "README.md",
     "CONTRIBUTING.md",
     "LICENSE-MIT",
@@ -28,3 +29,8 @@ codcel-calculation-engine = { git = "https://github.com/codcel-io/codcel-calcula
 async-trait = "0.1.91"
 regex = "1.13.1"
 once_cell = "1.21.4"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"

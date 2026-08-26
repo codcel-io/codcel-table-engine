@@ -37,21 +37,26 @@ use crate::column_type::ColumnType;
 use codcel_calculation_engine::date_time_base::{date_time_to_excel, time_to_excel};
 use codcel_calculation_engine::value::Value;
 use codcel_calculation_engine::value_format::ValueFormat;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
 
-/// Regex pattern for valid SQL identifiers: alphanumeric and underscores only, must start with letter or underscore
-static IDENTIFIER_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").expect("Invalid regex pattern"));
+/// Matches `^[a-zA-Z_][a-zA-Z0-9_]*$` without a regex, so there is no fallible
+/// initialisation to unwrap in a `static`.
+fn is_sql_identifier(identifier: &str) -> bool {
+    let mut chars = identifier.chars();
+    match chars.next() {
+        Some(first) if first.is_ascii_alphabetic() || first == '_' => {}
+        _ => return false,
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
 
 /// Validates that a string is a safe SQL identifier (column name, table name, etc.)
 fn validate_sql_identifier(identifier: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
     if identifier.is_empty() {
         return Err("SQL identifier cannot be empty".into());
     }
-    if !IDENTIFIER_REGEX.is_match(identifier) {
+    if !is_sql_identifier(identifier) {
         return Err(format!("Invalid SQL identifier: '{}'. Identifiers must contain only alphanumeric characters and underscores, and start with a letter or underscore.", identifier).into());
     }
     Ok(())
@@ -411,8 +416,7 @@ impl ConditionValue {
                     Value::AreaValue(value) => {
                         if value.len() == 1 {
                             if let Some(inner) = value.first() {
-                                if inner.len() == 1 {
-                                    let val = inner.first().unwrap();
+                                if let [val] = inner.as_slice() {
                                     let new_conditon_value =
                                         ConditionValue::new_value(val.clone(), *is_case_sensitive);
                                     let val =
@@ -453,18 +457,13 @@ impl ConditionValue {
                             Some(v) => Ok(format!("{v}")),
                         }
                     }
-                    Value::ChronoDateTime(val) => Ok(date_time_to_excel(
-                        val,
-                        value_format.date_semantics(),
-                    )?
-                    .to_string()),
+                    Value::ChronoDateTime(val) => {
+                        Ok(date_time_to_excel(val, value_format.date_semantics())?.to_string())
+                    }
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
-                            Ok(date_time_to_excel(
-                                value,
-                                value_format.date_semantics(),
-                            )?
-                            .to_string())
+                            Ok(date_time_to_excel(value, value_format.date_semantics())?
+                                .to_string())
                         } else {
                             Err("Empty datetime is not supported in a Condition Value".into())
                         }
@@ -657,18 +656,13 @@ impl ConditionValue {
                             Some(v) => Ok(format!("{v}")),
                         }
                     }
-                    Value::ChronoDateTime(val) => Ok(date_time_to_excel(
-                        val,
-                        value_format.date_semantics(),
-                    )?
-                    .to_string()),
+                    Value::ChronoDateTime(val) => {
+                        Ok(date_time_to_excel(val, value_format.date_semantics())?.to_string())
+                    }
                     Value::OptionChronoDateTime(value) => {
                         if let Some(value) = value {
-                            Ok(date_time_to_excel(
-                                value,
-                                value_format.date_semantics(),
-                            )?
-                            .to_string())
+                            Ok(date_time_to_excel(value, value_format.date_semantics())?
+                                .to_string())
                         } else {
                             Err("Empty datetime is not supported in a Condition Value".into())
                         }
@@ -822,7 +816,6 @@ mod tests {
             thousands_separator: ",".to_string(),
             use_excel_rounding: false,
             allow_lotus_1_2_3_1900_date_bug: true,
-            ..Default::default()
         }
     }
 
