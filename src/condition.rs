@@ -807,15 +807,16 @@ mod tests {
     use codcel_calculation_engine::value_format::ValueFormat;
     use std::collections::HashMap;
 
-    // Helper function to create a ValueFormat instance
+    /// A fixed `ValueFormat` for the tests: the default, with no currency symbol.
+    ///
+    /// Spelled as `..Default::default()` rather than an exhaustive field list so
+    /// that adding a field to `ValueFormat` upstream cannot break this. `Default`
+    /// is a plain literal, so this still does not depend on the host locale or on
+    /// `CODCEL_*` environment variables.
     fn create_value_format() -> ValueFormat {
         ValueFormat {
-            currency_symbol: "".to_string(),
-            decimal_separator: ".".to_string(),
-            language: "en".to_string(),
-            thousands_separator: ",".to_string(),
-            use_excel_rounding: false,
-            allow_lotus_1_2_3_1900_date_bug: true,
+            currency_symbol: String::new(),
+            ..Default::default()
         }
     }
 
