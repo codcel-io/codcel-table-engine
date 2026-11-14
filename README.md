@@ -65,7 +65,7 @@ Add the crate to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-codcel-table-engine = "0.1.9"
+codcel-table-engine = "0.1.10"
 ```
 
 Import and implement the trait:
