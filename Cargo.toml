@@ -1,6 +1,6 @@
 [package]
 name = "codcel-table-engine"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 rust-version = "1.89"
 authors = ["Codcel <support@codcel.io>"]
@@ -26,7 +26,7 @@ all-features = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codcel-calculation-engine = "0.1.10"
+codcel-calculation-engine = "0.1.11"
 async-trait = "0.1.91"
 regex = "1.13.1"
 
